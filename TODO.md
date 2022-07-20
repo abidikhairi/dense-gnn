@@ -1,6 +1,10 @@
 ### TODO List:
-    - [] implement methods
-    - [] project boileprate
+    - [] prepare project boileprate
+    - [] implement baseline methods
+        - [] Graph Convolutional Networks
+        - [] Graph Attention Networks
+        - [] Simplifying Graph Convolutional
+        - Node2Vec
     - [] node classification experiments
         - [] node classification with node2vec (https://snap.stanford.edu/node2vec/)
         - [] node classification with GCN (https://arxiv.org/abs/1609.02907)
