@@ -35,7 +35,7 @@ class GAT(nn.Module):
 
     def forward(self, edge_index, x):
         x = self.activation(self.conv1(x, edge_index))
-        x = th.dropout(x, p=0.6, training=self.training)
+        x = th.dropout(x, p=0.6, train=self.training)
         x = self.conv2(x, edge_index)
 
         return x
@@ -80,7 +80,7 @@ class DGCN(nn.Module):
         x_porj = self.projection(x) if self.skip_connection == 'concat' else x
 
         x = th.relu(self.conv1(x, edge_index))
-        x = th.dropout(x, p=0.5, training=self.training)
+        x = th.dropout(x, p=0.5, train=self.training)
         
         x = th.cat([x, x_porj]) if self.skip_connection == 'concat' else x + x_porj
         
