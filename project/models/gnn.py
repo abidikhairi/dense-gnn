@@ -31,7 +31,7 @@ class GAT(nn.Module):
 
         self.conv1 = tgn.GATConv(nfeats, nhids, nheads)
         self.conv2 = tgn.GATConv(nhids * nheads, nout, 1)
-        self.activation = th.nn.ELU()
+        self.activation = th.nn.LeakyReLU(negative_slope=0.2)
 
     def forward(self, edge_index, x):
         x = self.activation(self.conv1(x, edge_index))
