@@ -16,7 +16,7 @@ class GCN(nn.Module):
 
     def forward(self, edge_index, x):
         x = th.relu(self.conv1(x, edge_index))
-        x = th.dropout(x, p=0.5, training=self.training)
+        x = th.dropout(x, p=0.5, train=self.training)
         x = self.conv2(x, edge_index)
 
         return x
