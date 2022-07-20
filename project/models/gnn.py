@@ -85,7 +85,7 @@ class DGCN(nn.Module):
         x = th.relu(self.conv1(x, edge_index))
         x = th.dropout(x, p=0.5, train=self.training)
 
-        x = th.cat([x, x_proj]) if self.skip_connection == 'concat' else x + x_proj
+        x = th.cat([x, x_proj], dim=1) if self.skip_connection == 'concat' else x + x_proj
                 
         x = self.conv2(x, edge_index)
 
