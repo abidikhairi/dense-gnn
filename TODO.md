@@ -1,0 +1,16 @@
+### TODO List:
+    - [] implement methods
+    - [] project boileprate
+    - [] node classification experiments
+        - [] node classification with node2vec (https://snap.stanford.edu/node2vec/)
+        - [] node classification with GCN (https://arxiv.org/abs/1609.02907)
+        - [] node classification with SGC (https://arxiv.org/abs/1902.07153)
+        - [] node classification with spectral clustering 
+        - [] node classification with GAT (https://arxiv.org/abs/1710.10903)
+    - [] link prediction experiments
+        - [] link prediction with node2vec (https://snap.stanford.edu/node2vec/)
+        - [] link prediction with GCN (https://arxiv.org/abs/1609.02907)
+    - [] graph classification experiments
+        - [] graph classification with GCN (https://arxiv.org/abs/1609.02907)
+        - [] graph classification with GAT (https://arxiv.org/abs/1710.10903)
+        - [] graph classification with SVM
