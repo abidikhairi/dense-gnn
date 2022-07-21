@@ -15,10 +15,10 @@ class DGCN(nn.Module):
             raise ValueError('skip_connection must be either "add" or "concat"')
 
         if skip_connection == 'add':
-            assert nhids == proj_dim, 'nhids must be equal to proj_dim if skip_connection is "add"'
+            raise ValueError('remove because of hyperparameter tuning')
 
         self.skip_connection = skip_connection
-        self.nhids = nhids if self.skip_connection == 'add' else nhids + proj_dim
+        self.nhids = nhids + proj_dim
 
         self.projection = nn.Linear(nfeats, proj_dim)
 
