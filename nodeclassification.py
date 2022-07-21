@@ -1,8 +1,9 @@
 import os
 import argparse
+import logging
 import torch as th
 import torchmetrics.functional as thm
-
+from tqdm import tqdm
 from project.utils.datasets import node_classification_datasets as load_dataset
 from project.utils.models import load_model
 from project.utils.plotting import plot_metrics
@@ -12,6 +13,12 @@ root_path = os.path.dirname('.')
 
 
 def main(args):
+    logging.basicConfig(
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        level=logging.INFO
+    )
+    logger = logging.getLogger(__name__)
+
     data = load_dataset(args.data_path, args.dataset)
     data.to(args.device)
 
@@ -32,53 +39,39 @@ def main(args):
     criterion = th.nn.NLLLoss()
     optimizer = th.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
-    train_losses = []
-    valid_losses = []
     
-    train_accs = []
-    valid_accs = []
+    experiment_test_accuracies = []
+    experiment_test_f1 = []
+    experiment_test_recall = []
+    
+    logger.info("="*80)
+    logger.info(f'Training DGCN on {args.dataset}')
 
-    for epoch in range(args.epochs):
-        model.train()
-        optimizer.zero_grad()
-        out = model(edge_index, feats)
-        loss = criterion(softmax(out[train_idx]), labels[train_idx])
+    for _ in tqdm(range(10), desc='Experiments', leave=False):
+        for epoch in tqdm(range(args.epochs), desc='Training', leave=False):
+            model.train()
+            optimizer.zero_grad()
+            out = model(edge_index, feats)
+            loss = criterion(softmax(out[train_idx]), labels[train_idx])
 
-        loss.backward()
-        optimizer.step()
-
-        train_acc = thm.accuracy(out[train_idx], labels[train_idx]).item()
-        train_accs.append(train_acc)
-        train_losses.append(loss.item())
-
+            loss.backward()
+            optimizer.step()
+        
         model.eval()
         with th.no_grad():
             out = model(edge_index, feats)
-            loss = criterion(softmax(out[valid_idx]), labels[valid_idx])
-            valid_acc = thm.accuracy(out[valid_idx], labels[valid_idx]).item()
+            loss = criterion(softmax(out[test_idx]), labels[test_idx])
 
-            valid_accs.append(valid_acc)
-            valid_losses.append(loss.item())
-    
-    model.eval()
-    with th.no_grad():
-        out = model(edge_index, feats)
-        loss = criterion(softmax(out[test_idx]), labels[test_idx])
-        print('Test Loss: {:.5f}'.format(loss.item()))
+            experiment_test_accuracies.append(thm.accuracy(out[test_idx], labels[test_idx]).item())
+            experiment_test_f1.append(thm.f1_score(out[test_idx], labels[test_idx]).item())
+            experiment_test_recall.append(thm.recall(out[test_idx], labels[test_idx]).item())
 
-        print('Test Accuracy: {:.5f}'.format(thm.accuracy(out[test_idx], labels[test_idx])))
-        print('Test F1: {:.5f}'.format(thm.f1_score(out[test_idx], labels[test_idx])))
-        print('Test Recall: {:.5f}'.format(thm.recall(out[test_idx], labels[test_idx])))
-
-    metrics = {
-        'train_loss': train_losses,
-        'valid_loss': valid_losses,
-        'train_acc': train_accs,
-        'valid_acc': valid_accs
-    }
-
-    plot_metrics(args.dataset, args.model, metrics, args.epochs, os.path.join(root_path, 'figures'))
-
+    logger.info('Training complete')
+    logger.info('Test accuracy (mean): {:.4f} %'.format(th.tensor(experiment_test_accuracies).mean().item()*100))
+    logger.info('Test accuracy std: {:.4f}'.format(th.tensor(experiment_test_accuracies).std().item()*100))
+    logger.info('Test F1: {:.4f}'.format(th.tensor(experiment_test_f1).mean().item()))
+    logger.info('Test Recall: {:.4f}'.format(th.tensor(experiment_test_recall).mean().item()))
+    logger.info("="*80)
 
 
 if __name__ == '__main__':
