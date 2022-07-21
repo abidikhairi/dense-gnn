@@ -10,7 +10,10 @@ def node_classification_datasets(root, name):
         return tgd.Planetoid(root=root, name=name)[0]
     
     if name in ["Computers", "Photo"]:
-        return tgd.Amazon(root, name)
+        data = tgd.Amazon(root, name)[0]
+        tgt.RandomNodeSplit()(data)
+
+        return data
 
     if name == "Facebook":
         data = tgd.FacebookPagePage(root=root)[0]
