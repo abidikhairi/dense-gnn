@@ -19,4 +19,7 @@ def node_classification_datasets(root, name):
         return data
 
     if name == "LastFM":
-        return tgd.LastFMAsia(root=root)
+        data = tgd.LastFMAsia(root=root)[0]
+        tgt.RandomNodeSplit()(data)
+
+        return data
