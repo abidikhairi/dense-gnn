@@ -31,8 +31,17 @@ class Node2Vec:
 
 
     def test(self, train_x, train_y, test_x, test_y):
+        import sklearn.metrics as metrics
+        from sklearn.linear_model import LogisticRegression
+
+        clf = LogisticRegression(solver='lbfgs', multi_class='auto')\
+                .fit(train_x.detach().cpu().numpy(),train_y.detach().cpu().numpy())
         
-        return self.model.test(train_x, train_y, test_x, test_y)
+        test_acc = metrics.accuracy_score(test_y.detach().cpu().numpy(), clf.predict(test_x.detach().cpu().numpy()))
+        test_recall = metrics.recall_score(test_y.detach().cpu().numpy(), clf.predict(test_x.detach().cpu().numpy()), average='micro')
+        test_f1 = metrics.f1_score(test_y.detach().cpu().numpy(), clf.predict(test_x.detach().cpu().numpy()), average='micro')
+        
+        return test_acc, test_recall, test_f1
 
 
     def embeddings(self, nodes=None):
