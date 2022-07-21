@@ -7,6 +7,7 @@ from tqdm import tqdm
 from project.utils.datasets import node_classification_datasets as load_dataset
 from project.utils.models import load_model
 from project.utils.plotting import plot_metrics
+from project.utils.normalize import row_normalize
 
 
 root_path = os.path.dirname('.')
@@ -25,6 +26,8 @@ def main(args):
     feats = data.x
     labels = data.y
     edge_index = data.edge_index
+
+    # feats = row_normalize(feats)
 
     train_idx = th.nonzero(data.train_mask, as_tuple=False).squeeze()
     valid_idx = th.nonzero(data.val_mask, as_tuple=False).squeeze() 
