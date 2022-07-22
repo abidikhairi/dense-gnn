@@ -1,5 +1,6 @@
 import optuna
 import pickle
+import argparse
 import torch as th
 import torchmetrics.functional as thm
 
@@ -63,7 +64,7 @@ def train_and_evaluate(model, optimizer, edge_index, n_feats, labels, train_idx,
     return acc
 
 
-def objective(trial):
+def objective(trial, dataset):
     params = {
         'nhids': trial.suggest_int('nhids', 8, 32),
         'proj_dim': trial.suggest_int('proj_dim', 8, 16),
@@ -93,20 +94,25 @@ def objective(trial):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', type=str, default='LastFM')
+    args = parser.parse_args()
+
     study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler())
 
-    study.optimize(objective, n_trials=30)
+    study.optimize(lambda trial: objective(trial, args.dataset), n_trials=30)
 
     print('-----------------------------------------------------')
     print('Number of finished trials: ', len(study.trials))
-    print('Best trial:')
+    print(f'Best trial ({args.dataset}):')
+    
     best_trial = study.best_trial
     for key, value in best_trial.params.items():
         print('\t{}: {}'.format(key, value))
     
     print('-----------------------------------------------------')
 
-    with open('tuning/cora.pkl', 'wb') as f:
+    with open(f'tuning/{args.dataset}.pkl', 'wb') as f:
         pickle.dump(best_trial.params, f)
 
 
