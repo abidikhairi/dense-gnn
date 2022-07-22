@@ -1,11 +1,12 @@
 import os
 import argparse
+import pickle
 import logging
 import torch as th
 import torchmetrics.functional as thm
 from tqdm import tqdm
 from project.utils.datasets import node_classification_datasets as load_dataset
-from project.utils.models import load_model
+from project.utils.models import DGCN
 from project.utils.plotting import plot_metrics
 from project.utils.normalize import row_normalize
 
@@ -27,6 +28,19 @@ def main(args):
     labels = data.y
     edge_index = data.edge_index
 
+    lr = args.lr
+    weight_decay = args.weight_decay
+    nhids = args.nhids
+    proj_dim = args.proj_dim
+
+    if args.tuned:
+        with open('tuning/Cora.pkl', 'rb') as f:
+            params = pickle.load(f)
+
+            lr = params['lr']
+            weight_decay = params['weight_decay']
+
+
     # feats = row_normalize(feats)
 
     train_idx = th.nonzero(data.train_mask, as_tuple=False).squeeze()
@@ -36,11 +50,11 @@ def main(args):
     args.nfeats = feats.shape[1]
     args.nout = (labels.max() + 1).item()
 
-    model = load_model(args.model, args).to(args.device)
+    model = DGCN(args.nfeats, nhids, args.nout, proj_dim, args.skip_connection).to(args.device)
     
     softmax = th.nn.LogSoftmax(dim=1)
     criterion = th.nn.NLLLoss()
-    optimizer = th.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    optimizer = th.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     
     experiment_test_accuracies = []
@@ -95,6 +109,7 @@ if __name__ == '__main__':
     parser.add_argument('--weight-decay', type=float, default=0.0005, help='weight decay')
     parser.add_argument('--epochs', type=int, default=100, help='number of epochs')
     
+    parser.add_argument('--tuned', action='store_true', help='use tuned hyperparameters')
 
     args = parser.parse_args()
     main(args)
