@@ -1,4 +1,5 @@
 import optuna
+import pickle
 import torch as th
 import torchmetrics.functional as thm
 
@@ -17,8 +18,7 @@ def build_model(params):
     proj_dim = params['proj_dim']
     skip_connection = params['skip_connection']
 
-    if skip_connection == 'add':
-        proj_dim = nhids
+    skip_connection = 'concat'
 
     model = DGCN(nfeats, nhids, nout, proj_dim, skip_connection=skip_connection)
 
@@ -35,9 +35,16 @@ def build_optimizer(model, params):
 
 
 def train_and_evaluate(model, optimizer, edge_index, n_feats, labels, train_idx, test_idx):
+    device = th.device('cuda' if th.cuda.is_available() else 'cpu')
+    
+    model.to(device)
+    edge_index = edge_index.to(device)
+    n_feats = n_feats.to(device)
+    labels = labels.to(device)
+
     loss_fn = th.nn.NLLLoss()
     model.train()
-
+    
     for _ in range(100):
         optimizer.zero_grad()
         z = model(edge_index, n_feats)
@@ -51,7 +58,7 @@ def train_and_evaluate(model, optimizer, edge_index, n_feats, labels, train_idx,
         z = model(edge_index, n_feats)
         logits = th.softmax(z, dim=1)
         
-        acc = thm.accuracy(logits[test_idx], labels[test_idx]).item()
+        acc = thm.accuracy(logits[test_idx].cpu(), labels[test_idx].cpu()).item()
     
     return acc
 
@@ -67,7 +74,7 @@ def objective(trial):
 
     dataset = load_dataset('./data', 'LastFM')
 
-    n_feats = dataset.x
+    n_feats = th.eye(dataset.num_nodes).float()
     labels = dataset.y
     edge_index = dataset.edge_index
 
@@ -88,7 +95,7 @@ def objective(trial):
 def main():
     study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler())
 
-    study.optimize(objective, n_trials=100)
+    study.optimize(objective, n_trials=30)
 
     print('-----------------------------------------------------')
     print('Number of finished trials: ', len(study.trials))
@@ -98,6 +105,9 @@ def main():
         print('\t{}: {}'.format(key, value))
     
     print('-----------------------------------------------------')
+
+    with open('tuning/cora.pkl', 'wb') as f:
+        pickle.dump(best_trial.params, f)
 
 
 if __name__ == '__main__':
