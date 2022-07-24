@@ -34,7 +34,7 @@ class Node2Vec:
         import sklearn.metrics as metrics
         from sklearn.linear_model import LogisticRegression
 
-        clf = LogisticRegression(solver='lbfgs', multi_class='auto')\
+        clf = LogisticRegression(solver='liblinear', multi_class='auto')\
                 .fit(train_x.detach().cpu().numpy(),train_y.detach().cpu().numpy())
         
         test_acc = metrics.accuracy_score(test_y.detach().cpu().numpy(), clf.predict(test_x.detach().cpu().numpy()))
