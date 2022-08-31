@@ -9,6 +9,8 @@ from project.utils.datasets import node_classification_datasets as load_dataset
 from project.utils.models import DGCN
 from project.utils.plotting import plot_metrics
 from project.utils.normalize import row_normalize
+import wandb
+import time
 
 
 root_path = os.path.dirname('.')
@@ -20,7 +22,11 @@ def main(args):
         level=logging.INFO
     )
     logger = logging.getLogger(__name__)
-
+    
+    wandb.init(project='gnn-benchmark', name="sgc-{}".format(args.dataset), config={
+        'dataset': args.dataset,
+    })
+    
     data = load_dataset(args.data_path, args.dataset)
     data.to(args.device)
 
@@ -64,24 +70,39 @@ def main(args):
     logger.info("="*80)
     logger.info(f'Training DGCN on {args.dataset}')
 
-    for _ in tqdm(range(10), desc='Experiments', leave=False):
+    wandb.watch(model)
+
+    for _ in tqdm(range(1), desc='Experiments', leave=False):
+        tick = time.time()
         for epoch in tqdm(range(args.epochs), desc='Training', leave=False):
             model.train()
             optimizer.zero_grad()
             out = model(edge_index, feats)
             loss = criterion(softmax(out[train_idx]), labels[train_idx])
+            train_acc = thm.accuracy(softmax(out[train_idx]), labels[train_idx])
+            
+            wandb.log({
+                'train/loss': loss,
+                'train/acc': train_acc,
+            })
 
             loss.backward()
             optimizer.step()
-        
+        tock = time.time()
+        wandb.log({
+            'train/time': tock - tick,
+        })
         model.eval()
         with th.no_grad():
             out = model(edge_index, feats)
             loss = criterion(softmax(out[test_idx]), labels[test_idx])
-
-            experiment_test_accuracies.append(thm.accuracy(out[test_idx], labels[test_idx]).item())
-            experiment_test_f1.append(thm.f1_score(out[test_idx], labels[test_idx]).item())
-            experiment_test_recall.append(thm.recall(out[test_idx], labels[test_idx]).item())
+            wandb.log({
+                'test/loss': loss,
+                'test/acc': thm.accuracy(softmax(out[test_idx]), labels[test_idx]),
+            })
+            experiment_test_accuracies.append(thm.accuracy(softmax(out[test_idx]), labels[test_idx]).item())
+            experiment_test_f1.append(thm.f1_score(softmax(out[test_idx]), labels[test_idx]).item())
+            experiment_test_recall.append(thm.recall(softmax(out[test_idx]), labels[test_idx]).item())
 
     logger.info('Training complete')
     logger.info('Test accuracy (mean): {:.4f} %'.format(th.tensor(experiment_test_accuracies).mean().item()*100))
@@ -89,6 +110,8 @@ def main(args):
     logger.info('Test F1: {:.4f}'.format(th.tensor(experiment_test_f1).mean().item()))
     logger.info('Test Recall: {:.4f}'.format(th.tensor(experiment_test_recall).mean().item()))
     logger.info("="*80)
+
+    wandb.finish()
 
 
 if __name__ == '__main__':

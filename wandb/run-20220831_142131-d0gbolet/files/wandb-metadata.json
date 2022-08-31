@@ -1,0 +1,40 @@
+{
+    "os": "Linux-5.15.55-1-MANJARO-x86_64-with-glibc2.17",
+    "python": "3.8.13",
+    "heartbeatAt": "2022-08-31T12:21:34.715210",
+    "startedAt": "2022-08-31T12:21:31.478361",
+    "docker": null,
+    "gpu": "NVIDIA GeForce GTX 1650",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": [
+        "--dataset",
+        "Facebook",
+        "--data-path",
+        "./data",
+        "--model",
+        "DGCN",
+        "--nhids",
+        "30",
+        "--proj-dim",
+        "12",
+        "--epochs",
+        "100",
+        "--skip-connection",
+        "concat",
+        "--tuned"
+    ],
+    "state": "running",
+    "program": "nodeclassification.py",
+    "codePath": "nodeclassification.py",
+    "git": {
+        "remote": "git@github.com:abidikhairi/dense-gnn.git",
+        "commit": "30b44c3c067b03180f1ed89e52e95840dbf92fc0"
+    },
+    "email": "abidikhairi.1337@gmail.com",
+    "root": "/home/flursky/Work/projects/dense-gnn",
+    "host": "khairi-81lk",
+    "username": "flursky",
+    "executable": "/home/flursky/.opt/miniconda/envs/pyg/bin/python"
+}
