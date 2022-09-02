@@ -1,7 +1,49 @@
 """encoding: utf-8"""
+import math
+import dgl
 import torch as th
 import torch.nn as nn
 import torch_geometric.nn as tgn
+import dgl.nn.pytorch as dglnn
+
+
+class DGCNDGL(nn.Module):
+    def __init__(self, nfeats, nhids, nout, proj_dim=4) -> None:
+        super().__init__()
+        self.proj_dim = proj_dim
+
+        self.conv1 = dglnn.GraphConv(nfeats, nhids, allow_zero_in_degree=True)
+        self.conv2 = dglnn.GraphConv(nhids + self.proj_dim, nout, allow_zero_in_degree=True)
+        self.projection = nn.Linear(nfeats, proj_dim)
+
+
+    def forward(self, graph, feats):        
+        n_proj = self.projection(feats)
+        
+        h = self.conv1(graph, feats)
+        h = th.dropout(th.relu(h), p=0.5, train=self.training)
+        h = th.cat([h, n_proj], dim=1)
+
+        h = self.conv2(graph, h)
+
+        return h
+
+
+class DGCNGraphDGL(nn.Module):
+    def __init__(self, nfeats, nhids, nout, nclasses, proj_dim=4) -> None:
+        super().__init__()
+
+        self.dgcn = DGCNDGL(nfeats, nhids, nclasses, proj_dim)
+        self.classify = nn.Linear(nout, nclasses)
+
+    def forward(self, graph, feats):
+        h = self.dgcn(graph, feats)
+        
+        # do the reduction here
+        graph.ndata['hn'] = h
+        hg = dgl.sum_nodes(graph, 'hn')
+        
+        return hg
 
 
 class DGCN(nn.Module):
@@ -36,4 +78,5 @@ class DGCN(nn.Module):
                 
         x = self.conv2(x, edge_index)
 
-        return x
+        return th.cat([x, x_proj], dim=1) # only for graph classification
+
