@@ -23,7 +23,7 @@ def main(args):
     )
     logger = logging.getLogger(__name__)
     
-    wandb.init(project='gnn-benchmark', name="sgc-{}".format(args.dataset), config={
+    wandb.init(project='gnn-benchmark', name="dgcn-{}".format(args.dataset), config={
         'dataset': args.dataset,
     })
     
