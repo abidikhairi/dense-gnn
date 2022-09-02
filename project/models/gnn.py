@@ -80,3 +80,42 @@ class DGCN(nn.Module):
 
         return th.cat([x, x_proj], dim=1) # only for graph classification
 
+
+
+class MultiLayerDGCN(nn.Module):
+    def __init__(self, nfeats, nhids, nout, proj_dim=4, n_layers=2) -> None:
+        super().__init__()
+
+        self.nhids = nhids + proj_dim
+
+        self.projection = nn.Linear(nfeats, proj_dim)
+        
+        layers = []
+        layers.append(tgn.GCNConv(nfeats, nhids))
+        for _ in range(n_layers - 2):
+            layers.append(tgn.GCNConv(self.nhids, nhids))
+        
+        layers.append(tgn.GCNConv(self.nhids, nout))
+        self.layers = nn.Sequential(*layers)
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        stdv = 1. / math.sqrt(self.projection.weight.size(1))
+        self.projection.weight.data.normal_(-stdv, stdv)
+
+
+    def forward(self, edge_index, x):
+        x_proj = self.projection(x)
+
+        x = th.relu(self.layers[0](x, edge_index))
+        x = th.dropout(x, p=0.5, train=self.training)
+        x = th.cat([x, x_proj], dim=1)
+
+        for i in range(1, len(self.layers) - 1):
+            x = th.relu(self.layers[i](x, edge_index))
+            x = th.cat([x, x_proj], dim=1)
+            x = th.dropout(x, p=0.5, train=self.training)
+        
+        x = self.layers[-1](x, edge_index)
+        return x
