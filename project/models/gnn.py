@@ -6,6 +6,24 @@ import torch.nn as nn
 import torch_geometric.nn as tgn
 
 
+class LinkPredictor(nn.Module):
+    def __init__(self, nfeats, nhids, proj_dim=4, skip_connection = 'concat') -> None:
+        super().__init__()
+
+        self.dgcn = DGCNEncoder(nfeats, nhids, proj_dim, skip_connection)
+        self.predictor = nn.Sequential(
+            nn.Linear(2 * (nhids + proj_dim), 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, edge_index, x):
+        z = self.dgcn(edge_index, x)
+        
+        edges = th.cat([z[edge_index[0, :]], z[edge_index[1, :]]], dim=1)
+        return self.predictor(edges) # returns logits
+
+
+
 class DGCNEncoder(nn.Module):
     """
         Dense Graph Convolutional Networks (DGCN)
@@ -25,7 +43,7 @@ class DGCNEncoder(nn.Module):
         self.projection = nn.Linear(nfeats, proj_dim, bias=False)
 
         self.conv1 = tgn.GCNConv(nfeats, nhids)
-        self.conv2 = tgn.GCNConv(self.nhids, self.nhids)
+        self.conv2 = tgn.GCNConv(self.nhids, nhids)
 
 
     def forward(self, edge_index, x):
@@ -36,10 +54,10 @@ class DGCNEncoder(nn.Module):
 
         x = th.cat([x, x_proj], dim=1) if self.skip_connection == 'concat' else x + x_proj
                 
-        x = self.conv2(x, edge_index)
+        x = th.relu(self.conv2(x, edge_index))
 
         return th.cat([x, x_proj], dim=1)
-        
+
 
 class DGCN(nn.Module):
     """
