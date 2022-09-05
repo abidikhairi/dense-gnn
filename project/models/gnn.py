@@ -78,7 +78,7 @@ class DGCN(nn.Module):
                 
         x = self.conv2(x, edge_index)
 
-        return th.cat([x, x_proj], dim=1) # only for graph classification
+        return x
 
 
 
