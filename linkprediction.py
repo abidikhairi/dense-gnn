@@ -62,11 +62,11 @@ def main(args):
 
         valid_loss, valid_auroc = evaluate(predictor, loss_fn, val_data, device)
 
-        print(f'Epoch: {epoch:03d}, Train Loss: {train_loss:.4f}, Val Loss: {valid_loss:.4f}, Val AUROC: {valid_auroc:.4f}')
+        # print(f'Epoch: {epoch:03d}, Train Loss: {train_loss:.4f}, Val Loss: {valid_loss:.4f}, Val AUROC: {valid_auroc:.4f}')
         
     test_loss, test_auroc = test(predictor, loss_fn, test_data, device)
 
-    print(f'Test Loss: {test_loss:.4f}, Test AUROC: {test_auroc * 100:.2f} %')
+    print(test_auroc)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

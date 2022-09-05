@@ -27,7 +27,7 @@ def main():
 
         for split, data in [('train', train_data), ('valid', val_data), ('test', test_data)]:
             edge_index = data.edge_label_index
-            adj_mat = to_dense_adj(edge_index).squeeze(0)
+            adj_mat = to_dense_adj(edge_index).squeeze(0).to_sparse()
             edge_labels = data.edge_label
             feats = data.x
 
